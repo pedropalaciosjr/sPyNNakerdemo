@@ -64,4 +64,3 @@ plt.plot(input_firing_rates, output_firing_rates)
 plt.xlabel("Input firing rate (spikes/second)")
 plt.ylabel("Output firing rate (spikes/second)")
 plt.savefig("simple_example.png")
-plt.show();
