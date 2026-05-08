@@ -15,7 +15,7 @@ def main():
     sim.setup(timestep=1.0)
     sim.set_number_of_neurons_per_core(sim.IF_curr_exp, 100)
 
-    # Parameters of neuron model; these are the default parameters and are written for readability
+    # Parameters of neuron model; most of these are the default parameters and are listed for readability
     neuron_parameters = {
         "v_rest": -65.0,
         "cm": 1.0,
@@ -41,27 +41,41 @@ def main():
         label="IF_curr_exp"
     )
 
-    time = np.arange(0.0, runtime, 1.0)
-    amplitudes = 0.1 * np.sin(time * np.pi / 100.0)
+    # Step Current Source (uncomment and comment the noisy source to simulate)
+    # time = np.arange(0.0, runtime, 1.0)
+    # amplitudes = 1.0 * np.sin(time * np.pi / 100.0)
+    #
+    # current = sim.StepCurrentSource(times=time.tolist(), amplitudes=amplitudes.tolist())
 
-    current = sim.StepCurrentSource(times=time.tolist(), amplitudes=amplitudes.tolist())
+    # Noisy Current Source
+    current = sim.NoisyCurrentSource(mean=1.5, stdev=1.0, start=50.0, stop=runtime*0.85, dt=1.0)
     population[:200].inject(current)
 
     population.record("v")
 
     sim.run(runtime)
-    v_data = population.get_data().segments[0].filter(name="v")[0][:, number_of_neurons - 1] # Get the data for the last neuron
+    v_data_neuron_1 = population.get_data().segments[0].filter(name="v")[0][:, 0]  # Get the data for the first neuron
+    v_data_neuron_2 = population.get_data().segments[0].filter(name="v")[0][:, number_of_neurons - 1] # Get the data for the last neuron
     # v_data_mean = AnalogSignal(v_data.mean(axis=1).reshape(runtime, 1)*mV, sampling_period=runtime*ms) # For viewing the average among several neurons
 
     Figure(
-        Panel(v_data,
+Panel(v_data_neuron_1,
               ylabel="Membrane Potential (mV)",
               xlabel="Time (ms)",
               data_labels=[population.label],
               yticks=True,
               xticks=True,
-              xlim=(0, runtime)),
-        title="Leaky Integrate and Fire (LIF) Model",
+              xlim=(0, runtime),
+              ylim=(-90, 60)),
+        Panel(v_data_neuron_2,
+              ylabel="Membrane Potential (mV)",
+              xlabel="Time (ms)",
+              data_labels=[population.label],
+              yticks=True,
+              xticks=True,
+              xlim=(0, runtime),
+              ylim=(-90, 60)),
+        title="Leaky Integrate and Fire (LIF) Model with Decaying-Exponential Post-Synaptic Current",
         annotations=f"Simulated with {sim.name()}",
     ).save("LIF.png")
 
